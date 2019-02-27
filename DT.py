@@ -18,7 +18,7 @@ class DecisionTree:
     def DecisionTreeClassifier(self):
 
         warnings.filterwarnings("ignore", category=DeprecationWarning)
-        from DBconnection import connection2, SMI_engine
+        from DBconnection import connection2, SMI_engine, connection1
         cur, db, engine = connection2()
         cur.execute('SELECT * FROM Bank_DB.transaction')
         testX = DataFrame(cur.fetchall())
@@ -63,6 +63,13 @@ class DecisionTree:
         suspiciousTransactions.to_csv('suspiciousTransactions.csv', encoding='utf-8', index=False)
 
         engine2 = SMI_engine()
+        cur1, db1, engine1 = connection1()
+        cur1.execute('DROP TABLE `SMI_DB`.`SuspiciousTransaction`')
+
+        db1.commit()
+        cur1.close()
+        db1.close()
+
         suspiciousTransactions.to_sql(name='SuspiciousTransaction', con=engine2, if_exists='append',
                                          index=False)
         db.commit()

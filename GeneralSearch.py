@@ -97,28 +97,33 @@ class GeneralSearch:
         InnerCount = 0
         '''for each in res:
           print('Length of ITEMS', len(each['items']))'''
+        try:
+            for each in res:
 
-        for each in res:
-            for i in range(0, len(each['items'])):
-                #print('TITLES \n')
-                #print(each['items'][i]['title'])
-                self.document = self.document + '\n' + each['items'][i]['title']
-                self.ResultGoogle.append(each['items'][i]['title'])
-                #print('CONTENT \n')
-                #print(each['items'][i]['snippet'])
-                self.document = self.document + '\n' + each['items'][i]['snippet']
-                self.ResultGoogle.append(each['items'][i]['snippet'])
-        #print('AFTER SUM \n'+self.document)
-        self.ResultGoogle = set(self.ResultGoogle)
-        self.cacheResult['googleResult'].append(self.ResultGoogle)
+                for i in range(0, len(each['items'])):
+                    #print('TITLES \n')
+                    #print(each['items'][i]['title'])
+                    self.document = self.document + '\n' + each['items'][i]['title']
+                    self.ResultGoogle.append(each['items'][i]['title'])
+                    #print('CONTENT \n')
+                    #print(each['items'][i]['snippet'])
+                    self.document = self.document + '\n' + each['items'][i]['snippet']
+                    self.ResultGoogle.append(each['items'][i]['snippet'])
+            #print('AFTER SUM \n'+self.document)
+            self.ResultGoogle = set(self.ResultGoogle)
+            self.cacheResult['googleResult'].append(self.ResultGoogle)
 
 
-        self.textDocument = sent_tokenize(self.document)
-        self.cleanText = [self.cleanDocument(s) for s in self.textDocument]
+            self.textDocument = sent_tokenize(self.document)
+            self.cleanText = [self.cleanDocument(s) for s in self.textDocument]
 
-        self.docInfo = self.createDocuments(self.cleanText)
-        self.create_freq_dict(self.cleanText)
-        search_result, client_class = self.calculate_TFIDF()
+            self.docInfo = self.createDocuments(self.cleanText)
+            self.create_freq_dict(self.cleanText)
+            search_result, client_class = self.calculate_TFIDF()
+        except Exception as e:
+            search_result = 0
+            client_class = 'clean'
+
         return search_result, client_class
 
 
