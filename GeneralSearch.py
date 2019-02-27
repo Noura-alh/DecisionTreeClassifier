@@ -68,7 +68,7 @@ class GeneralSearch:
             f.write(item['text'] + '\n')
             self.tweets.append(item['text'])
             self.document = self.document + '\n'+ item['text']
-            print(item['text'] if 'text' in item else item)
+            #print(item['text'] if 'text' in item else item)
 
         f.close()
         self.tweets = set(self.tweets)
@@ -95,20 +95,20 @@ class GeneralSearch:
 
         count = 0
         InnerCount = 0
-        for each in res:
-          print('Length of ITEMS', len(each['items']))
+        '''for each in res:
+          print('Length of ITEMS', len(each['items']))'''
 
         for each in res:
             for i in range(0, len(each['items'])):
-                print('TITLES \n')
-                print(each['items'][i]['title'])
+                #print('TITLES \n')
+                #print(each['items'][i]['title'])
                 self.document = self.document + '\n' + each['items'][i]['title']
                 self.ResultGoogle.append(each['items'][i]['title'])
-                print('CONTENT \n')
-                print(each['items'][i]['snippet'])
+                #print('CONTENT \n')
+                #print(each['items'][i]['snippet'])
                 self.document = self.document + '\n' + each['items'][i]['snippet']
                 self.ResultGoogle.append(each['items'][i]['snippet'])
-        print('AFTER SUM \n'+self.document)
+        #print('AFTER SUM \n'+self.document)
         self.ResultGoogle = set(self.ResultGoogle)
         self.cacheResult['googleResult'].append(self.ResultGoogle)
 
@@ -171,14 +171,14 @@ class GeneralSearch:
         for each in cleanDoc:
             i += 1
             words = word_tokenize(each)
-            print('\n', words)
+            #print('\n', words)
             for word in words:
                 word = word.lower()
                 if word in self.keyWords:
                     self.keyWords[word] += 1
-        for keys, values in self.keyWords.items():
+        '''for keys, values in self.keyWords.items():
             print(keys)
-            print(values)
+            print(values)'''
 
 
     def calculate_TFIDF(self):
@@ -218,13 +218,13 @@ class GeneralSearch:
             clientClass = 'Clean'
 
 
-        print('Number of Words apeared from the list', numOfApearance)
+        '''print('Number of Words apeared from the list', numOfApearance)
         print('MAX FREQUENCY',max_frequency)
         print('Frequeancy', sum_of_frequencies)
         print('SearchClass Weight', SearchClass)
         print('Client Class', clientClass)
         print('JSON Format')
-        print(self.cacheResult)
+        print(self.cacheResult)'''
         #with open("searchfiles/HajajAlajmi.json", "w") as write_file:
             #json.dump(self.cacheResult, write_file)
 

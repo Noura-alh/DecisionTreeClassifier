@@ -40,7 +40,10 @@ for id, name in result:
     cur1.execute(query, val)
     dt_class = 0
     mc_class = 0
+    transaction_class =0
     profile_class = 0
+    GeneralSearch_result=0
+    GeneralSearch_class =0
 
     flag = False
     # If the client has any suspsuoius transaction run general search
@@ -49,10 +52,6 @@ for id, name in result:
         search = GeneralSearch('"' + name + '"', id)
         search.twitter_search()
         GeneralSearch_result, GeneralSearch_class = search.google_search()
-        print('client Name: ', name)
-        print('search_result: ',GeneralSearch_result)
-        print('client_class: ', GeneralSearch_class)
-
 
 
     #mc_class = multiCertire.score
@@ -65,6 +64,18 @@ for id, name in result:
         profile_class = 'Low'
     else:
         profile_class = 'Clean'
+
+    try:
+        transaction_class = ((dt_class + mc_class) / 2)
+    except ZeroDivisionError:
+        transaction_class = 0
+
+    print('client Name: ', name)
+    print('search_result: ', GeneralSearch_result)
+    print('transaction_class: ', transaction_class)
+    print('GeneralSearch_class: ', GeneralSearch_class)
+    print('profile class: ', profile_class)
+
 
     cur1.execute("UPDATE SMI_DB.Client SET profileClassification= '%s'WHERE clientID='%s' " % (profile_class, id))
 

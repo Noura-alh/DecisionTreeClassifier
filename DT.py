@@ -25,8 +25,8 @@ class DecisionTree:
         testX.columns = cur.column_names
 
 
-        print(testX.head())
-        print(testX.isnull().values.any())
+        #print(testX.head())
+        #print(testX.isnull().values.any())
 
         LOACTION = testX['location']
         NAMES = testX['clientName']
