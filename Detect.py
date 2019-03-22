@@ -54,17 +54,18 @@ for id, name in result:
     # If the client has any suspsuoius transaction run general search
     if any(name in s for s in suspsuoiusClient):
         dt_class = 1
-        #search = GeneralSearch('"' + name + '"', id)
+        search = GeneralSearch('"' + name + '"', id)
         #search.twitter_search()
-        #GeneralSearch_result, GeneralSearch_class = search.google_search()
+        GeneralSearch_result, GeneralSearch_class = search.google_search()
 
+
+
+    mc = MultiCriteria()
+    mc_class = mc.multi_criteria(id)
     try:
         transaction_class = ((dt_class + mc_class) / 2)
     except ZeroDivisionError:
         transaction_class = 0
-
-    mc = MultiCriteria()
-    mc_class = mc.multi_criteria(id)
     profile_class = (0.5 * transaction_class) + (0.5 * GeneralSearch_result)
 
 
@@ -89,10 +90,6 @@ for id, name in result:
     print('GeneralSearch_class: ', GeneralSearch_class)
     print('profile class: ', profile_class)
     print('***********************')
-
-
-
-
     cur1.execute("UPDATE SMI_DB.Client SET profileClassification= '%s'WHERE clientID='%s' " % (profile_class, id))
 
 print('Summary:')

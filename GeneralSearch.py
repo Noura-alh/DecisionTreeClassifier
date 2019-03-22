@@ -2,34 +2,25 @@ from DBconnection import connection1
 from googleapiclient.discovery import build
 from TwitterAPI import TwitterAPI
 from datetime import datetime
-import nltk
 import re
-from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize, sent_tokenize
-import math
-import pprint
-import json
 
 
 class GeneralSearch:
-
     def __init__(self, clientName, clientID):
+        '''
+              A Constructr to initialize needed variables and retrive
+              Keywords from Database
+              '''
+
         self.clientName = clientName
         self.clientID = clientID
-        self.url = 'https://www.google.co.in/search?q={}'.format(self.clientName)
         self.document = ''
         self.textDocument = ''
         self.cleanText = ''
         self.keyWords = {}
-        self.cacheResult = {
-            "googleResult": [],
-            "twitterResult": [],
-        } # to cache the result and store it on the data base
-        self.tweets = []
-        self.ResultGoogle = []
         self.GOOGLE_API_KEY = "AIzaSyDVjsiH1KjjI7Wus5imNPXFpdczbR5Iaqg"
-        self.GOOGLE_CSE_ID = "002858524502186211496:qscl9gemjug" # Google Custom search engine ID
-
+        self.GOOGLE_CSE_ID = "002858524502186211496:qscl9gemjug"  # Google Custom search engine ID
         try:
             cursor, conn, engine = connection1()
 
@@ -45,16 +36,19 @@ class GeneralSearch:
         except Exception as e:
             print(str(e))
 
-
     def twitter_search(self):
+        '''
+        this function is responsible for running search on twitter
+        :param SEARCH_TERM: the search key word 'Client Name'
+        '''
 
         SEARCH_TERM = self.clientName
         PRODUCT = 'fullarchive'
-        LABEL = 'TestSMI'
-        SANDBOX_CONSUMER_KEY = 'JR6dkIC3Cm0E9iQiFQQnRQDXl'
-        SANDBOX_CONSUMER_SECRET = 'zbhilbf0TpELOLvmmx83LgcYYG3p9hWqvOnJGGuY75XyeI0DIm'
-        SANDBOX_TOKEN_KEY = '557269145-mDE9g2ern37MjnzUQO3e8PeRpiteF3jd8RSgJuGd'
-        SANDBOX_TOKEN_SECRECT = 'I1d8sI0pVC4TdDDdohCy1WgZ2GvZOgkJx7C5FBenIvrDL'
+        LABEL = 'SMI_tool'
+        SANDBOX_CONSUMER_KEY = 'd51IGnDlp7Aw58l4SnDufKop2'
+        SANDBOX_CONSUMER_SECRET = '92rDpKfnLUR01y69gU7KFo5iCWCIVBZgLOCtxerfNq6dhfO8vZ'
+        SANDBOX_TOKEN_KEY = '705985483-XBPCazD0DB1I9gh9SepR1S26FnTTubMsPONEttr9 '
+        SANDBOX_TOKEN_SECRECT = 'wPSaAbogn7kIgzOLm2EeMdtY0vZthDcrGHCBTDFe38RZ0'
 
         api = TwitterAPI(SANDBOX_CONSUMER_KEY,
                          SANDBOX_CONSUMER_SECRET,
@@ -67,19 +61,16 @@ class GeneralSearch:
         for item in r:
             f.write(item['text'] + '\n')
             self.tweets.append(item['text'])
-            self.document = self.document + '\n'+ item['text']
-            #print(item['text'] if 'text' in item else item)
+            self.document = self.document + '\n' + item['text']
 
         f.close()
-        self.tweets = set(self.tweets)
-        self.cacheResult['twitterResult'].append(self.tweets)
 
     def google_search(self):
         '''
-        This function runs a search by client name on google
-
+        this function is responsible for running search on google
+        :return: Client_searchResult : numeric search result between 0 and 1
+                Client_SearchLabel : String Labeling the client (High, Medium,Low,Clean)
         '''
-
 
         res = []
         service = build("customsearch", "v1", developerKey=self.GOOGLE_API_KEY)
@@ -90,43 +81,24 @@ class GeneralSearch:
             num=10,
             start=1,
         ).execute())
-
-        #pprint.pprint(res)
-
-        count = 0
-        InnerCount = 0
-        '''for each in res:
-          print('Length of ITEMS', len(each['items']))'''
         try:
             for each in res:
 
                 for i in range(0, len(each['items'])):
-                    #print('TITLES \n')
-                    #print(each['items'][i]['title'])
                     self.document = self.document + '\n' + each['items'][i]['title']
-                    self.ResultGoogle.append(each['items'][i]['title'])
-                    #print('CONTENT \n')
-                    #print(each['items'][i]['snippet'])
                     self.document = self.document + '\n' + each['items'][i]['snippet']
-                    self.ResultGoogle.append(each['items'][i]['snippet'])
-            #print('AFTER SUM \n'+self.document)
-            self.ResultGoogle = set(self.ResultGoogle)
-            self.cacheResult['googleResult'].append(self.ResultGoogle)
-
 
             self.textDocument = sent_tokenize(self.document)
             self.cleanText = [self.cleanDocument(s) for s in self.textDocument]
 
             self.docInfo = self.createDocuments(self.cleanText)
             self.create_freq_dict(self.cleanText)
-            search_result, client_class = self.calculate_TFIDF()
+            Client_searchResult, Client_SearchLabel = self.calculate_TFIDF()
         except Exception as e:
-            search_result = 0
-            client_class = 'clean'
+            Client_searchResult = 0
+            Client_SearchLabel = 'clean'
 
-        return search_result, client_class
-
-
+        return Client_searchResult, Client_SearchLabel
 
     def cleanDocument(self, doc):
         '''
@@ -176,96 +148,58 @@ class GeneralSearch:
         for each in cleanDoc:
             i += 1
             words = word_tokenize(each)
-            #print('\n', words)
             for word in words:
                 word = word.lower()
                 if word in self.keyWords:
                     self.keyWords[word] += 1
-        '''for keys, values in self.keyWords.items():
-            print(keys)
-            print(values)'''
-
 
     def calculate_TFIDF(self):
         '''
-        this function calculate the number of keywords appeared form the list
-        :param list:
-        :return:
+        this function calculating the number of keywords appeared form the list
+        and frequncey of each word then the calculate TFIDF
+        :return: Client_searchResult : numeric search result between 0 and 1
+                Client_SearchLabel : String Labeling the client (High, Medium,Low,Clean)
         '''
 
-        numOfApearance = 0
+        num_of_apearance = 0
         sum_of_frequencies = 0
         max_frequency = 0
-        SearchClass = 0
-        clientClass = ''
+        Client_SearchResult = 0
+        Client_SearchLabel = ''
         for keys, values in self.keyWords.items():
-            if values > 0 :
+            if values > 0:
                 max_frequency = max(self.keyWords.values())
                 sum_of_frequencies += values
-                numOfApearance += 1
+                num_of_apearance += 1
         try:
 
-            SearchClass = ((numOfApearance * max_frequency) / (16))
-            #Normalization
-            if SearchClass > 1:
-                SearchClass = 1
-        except ZeroDivisionError :
-            SearchClass =0
+            Client_SearchResult = ((num_of_apearance * max_frequency) / (16))
+            # Normalization
+            if Client_SearchResult > 1:
+                Client_SearchResult = 1
+        except ZeroDivisionError:
+            Client_SearchResult = 0
 
-
-        if 0.7 < SearchClass <= 1:
-            clientClass = 'High'
-        elif 0.33 < SearchClass <= 0.7:
-            clientClass = 'Medium'
-        elif 0 < SearchClass <= 0.33:
-            clientClass = 'Low'
+        if 0.7 < Client_SearchResult <= 1:
+            Client_SearchLabel = 'High'
+        elif 0.33 < Client_SearchResult <= 0.7:
+            Client_SearchLabel = 'Medium'
+        elif 0 < Client_SearchResult <= 0.33:
+            Client_SearchLabel = 'Low'
         else:
-            clientClass = 'Clean'
-
-
-        '''print('Number of Words apeared from the list', numOfApearance)
-        print('MAX FREQUENCY',max_frequency)
-        print('Frequeancy', sum_of_frequencies)
-        print('SearchClass Weight', SearchClass)
-        print('Client Class', clientClass)
-        print('JSON Format')
-        print(self.cacheResult)'''
-        #with open("searchfiles/HajajAlajmi.json", "w") as write_file:
-            #json.dump(self.cacheResult, write_file)
-
-
-
-
-        #SAVING BEFORE CLEANING
-
-        '''f = open("searchfiles/%s.txt" % (self.clientName), "w+")
-        for each in self.tweets:
-            f.write(each)
-        for each in self.ResultGoogle:
-            f.write(each)
-        f.close()'''
+            Client_SearchLabel = 'Clean'
 
         date_now = datetime.now()
         formatted_date = date_now.strftime('%Y-%m-%d %H:%M:%S')
 
         cur, db, engine = connection1()
-
-        #SAVING AFTER CLEANING
-        #f = open("searchfiles/%s.txt" % (self.clientName), "w+")
-        '''for each in self.cleanText:
-            #f.write(each+'\n')
-            query = 'INSERT INTO generalSearch (searchDate, searchContent) VALUES(%s, %s)'
-            val = (formatted_date, each)
-            cur.execute(query, val)'''
-        cur.execute("UPDATE SMI_DB.Client SET generalSearchDate= '%s', generalSearchResult= '%s' WHERE clientID='%s' " % (formatted_date, SearchClass,self.clientID))
-        #f.close()
+        cur.execute(
+            "UPDATE SMI_DB.Client SET generalSearchDate= '%s', generalSearchResult= '%s' WHERE clientID='%s' " % (
+            formatted_date, Client_SearchResult, self.clientID))
         db.commit()
         cur.close()
         db.close()
-        return SearchClass, clientClass
-
-
-
+        return Client_SearchResult, Client_SearchLabel
 
 
 
